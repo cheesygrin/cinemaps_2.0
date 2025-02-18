@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "296748595332",
+    "project_id": "cinebase-db6f2",
+    "storage_bucket": "cinebase-db6f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296748595332:android:b5b1db0ac748ac2f7f6ad1",
+        "android_client_info": {
+          "package_name": "com.example.cinemaps"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "296748595332-6agkntgpnq9eaci6ee56kohgndgcsd7i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoGgNuUBlQn6amUJHqgOo93lywFS1EOkI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "296748595332-6agkntgpnq9eaci6ee56kohgndgcsd7i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "296748595332-2t00hp5so5jjo8f4gr216778endtv0jq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cinemaps"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
