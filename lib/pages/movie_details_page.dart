@@ -62,8 +62,10 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
     _isInWatchlist =
         _watchlistService.isInWatchlist(widget.userId, widget.movieId);
     _tabController = TabController(length: 4, vsync: this);
-    _loadMovieDetails();
+    
+    // Load movie details after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMovieDetails();
       _socialService.achievementService.setContext(context);
     });
   }
@@ -73,158 +75,192 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildSocialButton(
-            icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-            label: 'Like',
-            color: _isLiked ? CinemapsTheme.hotPink : null,
-            onTap: () {
-              setState(() => _isLiked = !_isLiked);
-              _socialService.addActivity(
-                userId: widget.userId,
-                type: UserActivityType.likedMovie,
-                targetId: widget.movieId,
-              );
-            },
-          ),
-          _buildSocialButton(
-            icon: Icons.share,
-            label: 'Share',
-            onTap: () {
-              Share.share(
-                'Check out ${_movieDetails!.title} on Cinemaps! Visit the filming locations and create your own movie tour!',
-                subject: 'Movie recommendation from Cinemaps',
-              );
-              _socialService.addActivity(
-                userId: widget.userId,
-                type: UserActivityType.sharedMovie,
-                targetId: widget.movieId,
-              );
-            },
-          ),
-          _buildSocialButton(
-            icon: _isInWatchlist ? Icons.bookmark : Icons.bookmark_outline,
-            label: _isInWatchlist ? 'In Watchlist' : 'Add to Watchlist',
-            onTap: () async {
-              if (_isInWatchlist) {
-                await _watchlistService.removeFromWatchlist(
-                    widget.userId, widget.movieId);
-              } else {
-                await _watchlistService.addToWatchlist(
-                  userId: widget.userId,
-                  mediaId: widget.movieId,
-                  type: WatchlistItemType.movie,
-                );
-              }
-              setState(() {
-                _isInWatchlist = !_isInWatchlist;
-              });
-            },
-            color: _isInWatchlist ? CinemapsTheme.hotPink : null,
-          ),
-          _buildSocialButton(
-            icon: Icons.add_location,
-            label: 'Check In',
-            onTap: () => _showCheckInDialog(context),
-          ),
-          _buildSocialButton(
-            icon: Icons.photo_camera,
-            label: 'Photo',
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => PhotoUploadDialog(
-                  locationId: _movieDetails!.locationId,
-                  userId: widget.userId,
-                  onUpload: (image, caption, tags) async {
-                    // TODO: Implement cloud storage
-                    final photoUrl = image.path; // Temporary, use actual upload
-                    await _socialService.uploadPhoto(
-                      userId: widget.userId,
-                      locationId: _movieDetails!.locationId,
-                      photoUrl: photoUrl,
-                      caption: caption,
-                      tags: tags,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildSocialButton(
+              icon: _isLiked ? Icons.favorite : Icons.favorite_border,
+              label: _isLiked ? 'Liked' : 'Like',
+              color: _isLiked ? CinemapsTheme.hotPink : null,
+              onTap: () async {
+                setState(() => _isLiked = !_isLiked);
+                try {
+                  await _socialService.addActivity(
+                    userId: widget.userId,
+                    type: UserActivityType.likedMovie,
+                    targetId: widget.movieId,
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() => _isLiked = !_isLiked); // Revert on error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+            _buildSocialButton(
+              icon: Icons.share,
+              label: 'Share',
+              onTap: () async {
+                try {
+                  await Share.share(
+                    'Check out ${_movieDetails!.title} on Cinemaps! Visit the filming locations and create your own movie tour!',
+                    subject: 'Movie recommendation from Cinemaps',
+                  );
+                  if (!mounted) return;
+                  await _socialService.addActivity(
+                    userId: widget.userId,
+                    type: UserActivityType.sharedMovie,
+                    targetId: widget.movieId,
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error sharing: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+            _buildSocialButton(
+              icon: _isInWatchlist ? Icons.bookmark : Icons.bookmark_outline,
+              label: _isInWatchlist ? 'In Watchlist' : 'Add to Watchlist',
+              onTap: () async {
+                final wasInWatchlist = _isInWatchlist;
+                setState(() => _isInWatchlist = !_isInWatchlist);
+                try {
+                  if (wasInWatchlist) {
+                    await _watchlistService.removeFromWatchlist(
+                      widget.userId,
+                      widget.movieId,
                     );
-                  },
-                ),
-              );
-            },
-          ),
-          _buildSocialButton(
-            icon: Icons.comment,
-            label: 'Comment',
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: CinemapsTheme.deepSpaceBlack,
-                isScrollControlled: true,
-                builder: (context) => DraggableScrollableSheet(
-                  initialChildSize: 0.9,
-                  minChildSize: 0.5,
-                  maxChildSize: 0.95,
-                  builder: (context, scrollController) => Column(
-                    children: [
-                      AppBar(
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        title: const Text('Comments'),
-                        actions: [
-                          IconButton(
-                            icon: const Icon(Icons.add_comment),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => CommentDialog(
-                                  targetId: widget.movieId,
-                                  userId: widget.userId,
-                                  onSubmit: (comment) async {
-                                    await _socialService.addActivity(
-                                      userId: widget.userId,
-                                      type: UserActivityType.commentedMovie,
-                                      targetId: widget.movieId,
-                                      metadata: {'comment': comment},
-                                    );
-                                  },
-                                ),
-                              );
-                            },
+                  } else {
+                    await _watchlistService.addToWatchlist(
+                      userId: widget.userId,
+                      mediaId: widget.movieId,
+                      type: WatchlistItemType.movie,
+                    );
+                  }
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() => _isInWatchlist = wasInWatchlist); // Revert on error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating watchlist: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              color: _isInWatchlist ? CinemapsTheme.hotPink : null,
+            ),
+            _buildSocialButton(
+              icon: Icons.add_location,
+              label: 'Check In',
+              onTap: () => _showCheckInDialog(context),
+            ),
+            _buildSocialButton(
+              icon: Icons.photo_camera,
+              label: 'Photo',
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => PhotoUploadDialog(
+                    locationId: _movieDetails!.locationId,
+                    userId: widget.userId,
+                    onUpload: (image, caption, tags) async {
+                      try {
+                        // TODO: Implement cloud storage
+                        final photoUrl = image.path; // Temporary, use actual upload
+                        await _socialService.uploadPhoto(
+                          userId: widget.userId,
+                          locationId: _movieDetails!.locationId,
+                          photoUrl: photoUrl,
+                          caption: caption,
+                          tags: tags,
+                        );
+                        if (!mounted) return;
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Photo uploaded successfully'),
+                            backgroundColor: CinemapsTheme.deepSpaceBlack,
                           ),
-                        ],
-                      ),
-                      Expanded(
-                        child: ListView(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          children: [
-                            CommentList(
-                              comments: _movieDetails!.comments,
-                              users: _socialService.getUsers(),
-                              currentUserId: widget.userId,
-                              onLike: (commentId) async {
-                                final comment = _movieDetails!.comments
-                                    .firstWhere((c) => c.id == commentId);
-                                await _socialService.likeComment(
-                                  widget.userId,
-                                  comment,
-                                );
-                              },
-                              onReply: (commentId) {
-                                final comment = _movieDetails!.comments
-                                    .firstWhere((c) => c.id == commentId);
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error uploading photo: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+            _buildSocialButton(
+              icon: Icons.comment,
+              label: 'Comment',
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: CinemapsTheme.deepSpaceBlack,
+                  isScrollControlled: true,
+                  builder: (context) => DraggableScrollableSheet(
+                    initialChildSize: 0.9,
+                    minChildSize: 0.5,
+                    maxChildSize: 0.95,
+                    builder: (context, scrollController) => Column(
+                      children: [
+                        AppBar(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          title: const Text('Comments'),
+                          actions: [
+                            IconButton(
+                              icon: const Icon(Icons.add_comment),
+                              onPressed: () {
                                 showDialog(
                                   context: context,
                                   builder: (context) => CommentDialog(
                                     targetId: widget.movieId,
                                     userId: widget.userId,
-                                    onSubmit: (content) async {
-                                      await _socialService.replyToComment(
-                                        widget.userId,
-                                        comment,
-                                        content,
-                                      );
+                                    onSubmit: (comment) async {
+                                      try {
+                                        await _socialService.addActivity(
+                                          userId: widget.userId,
+                                          type: UserActivityType.commentedMovie,
+                                          targetId: widget.movieId,
+                                          metadata: {'comment': comment},
+                                        );
+                                        if (!mounted) return;
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Comment added successfully'),
+                                            backgroundColor: CinemapsTheme.deepSpaceBlack,
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error adding comment: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
                                     },
                                   ),
                                 );
@@ -232,14 +268,81 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: ListView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            children: [
+                              CommentList(
+                                comments: _movieDetails!.comments,
+                                users: _socialService.getUsers(),
+                                currentUserId: widget.userId,
+                                onLike: (commentId) async {
+                                  try {
+                                    final comment = _movieDetails!.comments
+                                        .firstWhere((c) => c.id == commentId);
+                                    await _socialService.likeComment(
+                                      widget.userId,
+                                      comment,
+                                    );
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error liking comment: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                onReply: (commentId) {
+                                  final comment = _movieDetails!.comments
+                                      .firstWhere((c) => c.id == commentId);
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => CommentDialog(
+                                      targetId: widget.movieId,
+                                      userId: widget.userId,
+                                      onSubmit: (content) async {
+                                        try {
+                                          await _socialService.replyToComment(
+                                            widget.userId,
+                                            comment,
+                                            content,
+                                          );
+                                          if (!mounted) return;
+                                          Navigator.pop(context);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Reply added successfully'),
+                                              backgroundColor: CinemapsTheme.deepSpaceBlack,
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error adding reply: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -307,9 +410,13 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
   }
 
   Future<void> _loadMovieDetails() async {
+    if (!mounted) return;
+    
     setState(() => _isLoading = true);
     try {
       final details = await _movieService.getMovieDetails(widget.movieId);
+      if (!mounted) return;
+      
       setState(() {
         _movieDetails = details;
         _locationMarkers = details.filmingLocations
@@ -325,17 +432,17 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
         _isLoading = false;
       });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading movie details: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading movie details: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -762,6 +869,15 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
   }
 
   Widget _buildLocationsTab() {
+    if (_movieDetails?.filmingLocations.isEmpty ?? true) {
+      return const Center(
+        child: Text(
+          'No filming locations available',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
     return Column(
       children: [
         if (_currentRoute != null)
@@ -795,22 +911,42 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
           ),
         SizedBox(
           height: 300,
-          child: GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: LatLng(
-                _movieDetails!.filmingLocations.first.latitude,
-                _movieDetails!.filmingLocations.first.longitude,
-              ),
-              zoom: 12,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(
+                      _movieDetails!.filmingLocations.first.latitude,
+                      _movieDetails!.filmingLocations.first.longitude,
+                    ),
+                    zoom: 12,
+                  ),
+                  markers: _locationMarkers,
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: false,
+                  onMapCreated: (controller) {
+                    _mapCompleter.complete(controller);
+                    _onMapCreated(controller);
+                  },
+                  polylines: _routePolylines,
+                  mapToolbarEnabled: false,
+                  zoomControlsEnabled: false,
+                  compassEnabled: false,
+                  mapType: MapType.normal,
+                  buildingsEnabled: false,
+                  trafficEnabled: false,
+                ),
+                if (!_isMapLoaded)
+                  Container(
+                    color: CinemapsTheme.deepSpaceBlack,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              ],
             ),
-            markers: _locationMarkers,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            onMapCreated: _onMapCreated,
-            polylines: _routePolylines,
-            mapToolbarEnabled: false,
-            zoomControlsEnabled: false,
-            compassEnabled: false,
           ),
         ),
         Expanded(
@@ -1019,16 +1155,23 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
 
   void _onMapCreated(GoogleMapController controller) async {
     _mapController = controller;
+    
+    // Set custom map style
+    await controller.setMapStyle(mapStyle.toString());
+    
+    // Only update state if widget is still mounted
+    if (!mounted) return;
     setState(() => _isMapLoaded = true);
     
-    // Center the map on the first location
+    // Center the map on all locations
     if (_movieDetails?.filmingLocations.isNotEmpty == true) {
-      final firstLocation = _movieDetails!.filmingLocations.first;
-      controller.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(firstLocation.latitude, firstLocation.longitude),
-          12.0,
-        ),
+      final points = _movieDetails!.filmingLocations
+          .map((loc) => LatLng(loc.latitude, loc.longitude))
+          .toList();
+      
+      final bounds = _getBoundsForLocations(points);
+      await controller.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, 50.0),
       );
     }
   }

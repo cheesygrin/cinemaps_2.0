@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/user_database_service.dart';
 import '../services/movies_service.dart';
+import '../services/backup_service.dart';
 import '../theme/cinemaps_theme.dart';
 import '../models/user_auth.dart';
 import 'admin_movies_page.dart';
@@ -174,34 +175,164 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   Widget _buildContentTab(MoviesService moviesService) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CinemapsTheme.hotPink,
-                    padding: const EdgeInsets.all(16),
-                  ),
-                  icon: const Icon(Icons.movie),
-                  label: const Text('Manage Movies'),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminMoviesPage(),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: CinemapsTheme.hotPink,
+                          padding: const EdgeInsets.all(16),
+                        ),
+                        icon: const Icon(Icons.movie),
+                        label: const Text('Manage Movies'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AdminMoviesPage(),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                const Text(
+                  'Backup Settings',
+                  style: TextStyle(
+                    color: CinemapsTheme.neonYellow,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Use GitHub Desktop to push your changes to GitHub',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  color: Colors.white.withOpacity(0.1),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: CinemapsTheme.neonYellow,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                                icon: const Icon(Icons.backup),
+                                label: const Text('Create Manual Backup'),
+                                onPressed: () async {
+                                  final backup = BackupService();
+                                  final success = await backup.createBackup('Manual backup from admin panel');
+                                  
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          success 
+                                              ? 'Backup created successfully! Open GitHub Desktop to push changes.' 
+                                              : 'Failed to create backup. Check console for details.',
+                                        ),
+                                        backgroundColor: success ? Colors.green : Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Auto Backup',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: CinemapsTheme.electricPurple,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                                icon: const Icon(Icons.timer),
+                                label: const Text('Enable Auto Backup (1 hour)'),
+                                onPressed: () async {
+                                  final backup = BackupService();
+                                  await backup.startAutoBackup();
+                                  
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Auto backup enabled. Remember to push changes in GitHub Desktop.'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey,
+                                  padding: const EdgeInsets.all(16),
+                                ),
+                                icon: const Icon(Icons.stop),
+                                label: const Text('Disable Auto Backup'),
+                                onPressed: () {
+                                  final backup = BackupService();
+                                  backup.stopAutoBackup();
+                                  
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Auto backup disabled'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

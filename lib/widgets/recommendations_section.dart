@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../models/recommendation.dart';
 import '../services/recommendation_service.dart';
 import '../theme/cinemaps_theme.dart';
+import '../services/movies_service.dart';
+import '../services/auth_service.dart';
+import '../pages/movie_details_page.dart';
 
 class RecommendationsSection extends StatelessWidget {
   final String userId;
@@ -117,60 +120,78 @@ class _RecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white.withOpacity(0.1),
-      margin: const EdgeInsets.all(8.0),
-      child: Container(
-        width: 150,
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              _getIcon(),
-              color: CinemapsTheme.hotPink,
-              size: 32,
+    final moviesService = Provider.of<MoviesService>(context);
+    final movie = moviesService.getMovieById(recommendation.targetId);
+    
+    if (movie == null) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailsPage(
+              movieId: movie.id,
+              userId: Provider.of<AuthService>(context, listen: false).currentUser?.uid ?? 'guest',
             ),
-            const SizedBox(height: 8),
-            Text(
-              recommendation.targetId, // TODO: Get actual title
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.white.withOpacity(0.1),
+        margin: const EdgeInsets.all(8.0),
+        child: Container(
+          width: 150,
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                _getIcon(),
+                color: CinemapsTheme.hotPink,
+                size: 32,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              recommendation.getReasonText(),
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const Spacer(),
-            Row(
-              children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                  size: 16,
+              const SizedBox(height: 8),
+              Text(
+                movie.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '${(recommendation.score * 100).round()}%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                recommendation.getReasonText(),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: 16,
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 4),
+                  Text(
+                    '${(recommendation.score * 100).round()}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,142 +1,51 @@
 import 'package:flutter/material.dart';
+import '../models/movie.dart';
 import '../theme/cinemaps_theme.dart';
-import '../services/movies_service.dart';
 
 class MovieCard extends StatelessWidget {
-  final MovieListItem movie;
-  final VoidCallback onTap;
-  final VoidCallback onToggleWatchlist;
+  final Movie movie;
+  final VoidCallback? onTap;
 
   const MovieCard({
     super.key,
     required this.movie,
-    required this.onTap,
-    required this.onToggleWatchlist,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white.withOpacity(0.05),
+      elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: CinemapsTheme.hotPink.withOpacity(0.3),
-          width: 1,
-        ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         child: SingleChildScrollView(
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 2 / 3,
-                    child: movie.posterUrl != null
-                        ? Image.network(
-                            movie.posterUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.black,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.movie,
-                                    size: 48,
-                                    color: Colors.white.withOpacity(0.3),
-                                  ),
-                                ),
-                              );
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: Colors.black,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      CinemapsTheme.hotPink,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: Colors.black,
-                            child: Center(
-                              child: Icon(
-                                Icons.movie,
-                                size: 48,
-                                color: Colors.white.withOpacity(0.3),
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    icon: Icon(
-                      movie.isInWatchlist
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
-                      color: movie.isInWatchlist
-                          ? CinemapsTheme.hotPink
-                          : Colors.white,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
                     ),
-                    onPressed: onToggleWatchlist,
-                  ),
-                ),
-                if (movie.locationCount > 0)
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: CinemapsTheme.hotPink,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${movie.locationCount}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: AspectRatio(
+                      aspectRatio: 2 / 3,
+                      child: movie.posterUrl.isNotEmpty
+                          ? Image.asset(
+                              movie.posterUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildPlaceholder();
+                              },
+                            )
+                          : _buildPlaceholder(),
                     ),
                   ),
-                if (movie.tourCount > 0)
                   Positioned(
-                    bottom: 8,
+                    top: 8,
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -148,18 +57,18 @@ class MovieCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.map,
-                            color: CinemapsTheme.neonYellow,
+                            Icons.star,
+                            color: Colors.amber,
                             size: 16,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${movie.tourCount}',
+                            movie.rating.toString(),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -167,74 +76,94 @@ class MovieCard extends StatelessWidget {
                       ),
                     ),
                   ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movie.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
+                    if (movie.releaseYear > 0) ...[
+                      const SizedBox(height: 4),
                       Text(
                         movie.releaseYear.toString(),
                         style: TextStyle(
+                          fontSize: 14,
                           color: Colors.white.withOpacity(0.7),
-                          fontSize: 14,
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.star,
-                        color: CinemapsTheme.neonYellow,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        movie.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
-                  ),
-                  if (movie.locationCount > 0) ...[
                     const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: movie.locationProgress,
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        CinemapsTheme.hotPink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      '${movie.visitedLocations.length}/${movie.locationCount} locations visited',
+                      movie.overview,
                       style: TextStyle(
+                        fontSize: 14,
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (movie.locationCount > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.place,
+                            size: 16,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${movie.locationCount} Locations',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: Colors.grey.shade900,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.movie,
+            size: 48,
+            color: Colors.white.withOpacity(0.3),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            movie.title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
