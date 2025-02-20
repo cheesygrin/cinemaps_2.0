@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/watchlist_item.dart';
 
 class WatchlistService extends ChangeNotifier {
@@ -6,7 +6,8 @@ class WatchlistService extends ChangeNotifier {
 
   // Get all watchlist items for a user
   List<WatchlistItem> getWatchlist(String userId) {
-    return _userWatchlists[userId] ?? [];
+    // Return empty list for now
+    return [];
   }
 
   // Get filtered watchlist items

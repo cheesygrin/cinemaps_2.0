@@ -108,7 +108,7 @@ class _MapPageState extends State<MapPage> {
               child: Row(
                 children: [
                   Hero(
-                    tag: 'app_title',
+                    tag: 'map_page_title',
                     child: Text(
                       'Cinemaps',
                       style: TextStyle(
@@ -206,20 +206,11 @@ class _MapPageState extends State<MapPage> {
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade900,
                                           borderRadius: BorderRadius.circular(4),
-                                          image: movie.id == 'raiders'
-                                              ? const DecorationImage(
-                                                  image: AssetImage('assets/images/movies/raiders.jpg'),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
+                                          image: DecorationImage(
+                                            image: NetworkImage(movie.posterUrl),
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
-                                        child: movie.id != 'raiders'
-                                            ? const Icon(
-                                                Icons.movie_outlined,
-                                                color: Colors.white70,
-                                                size: 20,
-                                              )
-                                            : null,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(

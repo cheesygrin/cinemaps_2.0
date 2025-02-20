@@ -1,19 +1,33 @@
 import 'package:flutter/foundation.dart';
-import '../models/user_auth.dart';
+
+class User {
+  final String uid;
+  final String email;
+  final String displayName;
+  final bool isAnonymous;
+
+  User({
+    required this.uid,
+    required this.email,
+    required this.displayName,
+    this.isAnonymous = true,
+  });
+}
 
 class AuthService extends ChangeNotifier {
-  UserAuth? _currentUser;
-  UserAuth? get currentUser => _currentUser;
+  User? _currentUser;
 
   AuthService() {
     // Initialize with a guest user
-    signInAsGuest();
+    _currentUser = User(
+      uid: 'guest',
+      email: 'guest@example.com',
+      displayName: 'Guest User',
+      isAnonymous: true,
+    );
   }
 
-  Future<void> signInAsGuest() async {
-    _currentUser = UserAuth.guest();
-    notifyListeners();
-  }
+  User? get currentUser => _currentUser;
 
   Future<void> signOut() async {
     _currentUser = null;

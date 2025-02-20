@@ -41,7 +41,7 @@ class _ContainerPageState extends State<ContainerPage> {
       appBar: AppBar(
         backgroundColor: CinemapsTheme.deepSpaceBlack,
         title: Hero(
-          tag: 'app_title',
+          tag: 'container_page_title',
           child: const Text(
             'Cinemaps',
             style: TextStyle(color: CinemapsTheme.neonYellow),

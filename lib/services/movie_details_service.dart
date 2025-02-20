@@ -179,8 +179,8 @@ class MovieDetailsService extends ChangeNotifier {
     'big': {
       'id': 'big',
       'title': 'Big',
-      'posterUrl': '',
-      'backdropUrl': '',
+      'posterUrl': 'https://placehold.co/300x450/png?text=Big',
+      'backdropUrl': 'https://placehold.co/1920x1080/png?text=Big+Backdrop',
       'releaseYear': 1988,
       'genres': ['Comedy', 'Drama', 'Fantasy'],
       'overview': 'After wishing to be made big, a teenage boy wakes the next morning to find himself mysteriously in the body of an adult.',
@@ -367,8 +367,8 @@ class MovieDetailsService extends ChangeNotifier {
     },
     'raiders_lost_ark': {
       'title': 'Raiders of the Lost Ark',
-      'posterUrl': '',
-      'backdropUrl': '',
+      'posterUrl': 'https://placehold.co/300x450/png?text=Raiders',
+      'backdropUrl': 'https://placehold.co/1920x1080/png?text=Raiders+Backdrop',
       'releaseYear': 1981,
       'genres': ['Action', 'Adventure'],
       'overview': 'When Dr. Indiana Jones – the tweed-suited professor who just happens to be a celebrated archaeologist – is hired by the government to locate the legendary Ark of the Covenant, he finds himself up against the entire Nazi regime.',

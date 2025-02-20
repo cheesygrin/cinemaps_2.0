@@ -95,15 +95,19 @@ class _MoviesPageState extends State<MoviesPage> {
                   return MovieCard(
                     movie: movie,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MovieDetailsPage(
-                            movieId: movie.id,
-                            userId: user?.uid ?? 'guest',
+                      try {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MovieDetailsPage(
+                              movieId: movie.id,
+                              userId: user?.uid ?? 'guest',
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } catch (e) {
+                        print('Error navigating to MovieDetailsPage: $e');
+                      }
                     },
                   );
                 },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'achievement_service.dart';
+import 'package:flutter/foundation.dart';
 
 class UserProfile {
   final String id;
@@ -216,8 +217,8 @@ class SocialService extends ChangeNotifier {
     return [];
   }
 
-  Future<List<ActivityItem>> getFriendsActivity(String userId) async {
-    // TODO: Implement actual friends' activity retrieval
+  Future<List<dynamic>> getFriendsActivity(String userId) async {
+    // Return empty list for now
     return [];
   }
 

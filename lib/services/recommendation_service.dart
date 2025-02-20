@@ -26,14 +26,33 @@ class RecommendationService extends ChangeNotifier {
        _locationService = locationService;
 
   Future<List<Recommendation>> getRecommendations(String userId) async {
-    // Check if we need to refresh recommendations
-    final lastUpdate = _lastUpdateTime[userId];
-    if (lastUpdate == null || 
-        DateTime.now().difference(lastUpdate) > refreshInterval) {
-      await _generateRecommendations(userId);
-    }
-    
-    return _userRecommendations[userId] ?? [];
+    // Return default recommendations for now
+    return [
+      Recommendation(
+        id: 'rec_default_1',
+        targetId: 'raiders',
+        type: RecommendationType.movie,
+        reasons: [RecommendationReason.trending],
+        score: 0.95,
+        createdAt: DateTime.now(),
+      ),
+      Recommendation(
+        id: 'rec_default_2',
+        targetId: 'ghostbusters',
+        type: RecommendationType.movie,
+        reasons: [RecommendationReason.trending],
+        score: 0.92,
+        createdAt: DateTime.now(),
+      ),
+      Recommendation(
+        id: 'rec_default_3',
+        targetId: 'back_to_the_future',
+        type: RecommendationType.movie,
+        reasons: [RecommendationReason.trending],
+        score: 0.90,
+        createdAt: DateTime.now(),
+      ),
+    ];
   }
 
   Future<void> _generateRecommendations(String userId) async {

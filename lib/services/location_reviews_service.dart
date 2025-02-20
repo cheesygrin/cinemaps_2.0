@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 class VisitedLocation {
   final String id;
@@ -52,27 +53,9 @@ class LocationReviewsService extends ChangeNotifier {
   final Map<String, List<LocationReview>> _reviews = {};
   final Map<String, List<VisitedLocation>> _visitedLocations = {};
 
-  Future<List<VisitedLocation>> getVisitedLocations(String userId) async {
-    // In a real app, this would fetch from a database
-    // For now, return some mock data
-    return [
-      VisitedLocation(
-        id: 'loc1',
-        name: 'Central Park',
-        coordinates: const LatLng(40.7829, -73.9654),
-        distance: 0.5,
-        category: 'Park',
-        visitDate: DateTime.now().subtract(const Duration(days: 7)),
-      ),
-      VisitedLocation(
-        id: 'loc2',
-        name: 'Empire State Building',
-        coordinates: const LatLng(40.7484, -73.9857),
-        distance: 1.2,
-        category: 'Landmark',
-        visitDate: DateTime.now().subtract(const Duration(days: 14)),
-      ),
-    ];
+  Future<List<dynamic>> getVisitedLocations(String userId) async {
+    // Return empty list for now
+    return [];
   }
 
   Future<void> addReview({

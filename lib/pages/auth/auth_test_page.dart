@@ -8,6 +8,9 @@ class AuthTestPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final user = authService.currentUser;
+
     return Scaffold(
       backgroundColor: CinemapsTheme.deepSpaceBlack,
       body: Center(
@@ -23,22 +26,38 @@ class AuthTestPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: CinemapsTheme.hotPink,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            if (user != null) ...[
+              Text(
+                'Welcome ${user.displayName}!',
+                style: const TextStyle(
+                  color: CinemapsTheme.neonYellow,
+                  fontSize: 24,
                 ),
               ),
-              onPressed: () {
-                context.read<AuthService>().signInAsGuest();
-              },
-              child: const Text(
-                'Continue as Guest',
-                style: TextStyle(fontSize: 18),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CinemapsTheme.hotPink,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+                onPressed: () => authService.signOut(),
+                child: const Text(
+                  'Sign Out',
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
-            ),
+            ] else ...[
+              const Text(
+                'Not signed in',
+                style: TextStyle(
+                  color: CinemapsTheme.neonYellow,
+                  fontSize: 24,
+                ),
+              ),
+            ],
           ],
         ),
       ),
