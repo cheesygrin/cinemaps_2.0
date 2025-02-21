@@ -6,6 +6,7 @@ class MoviesService extends ChangeNotifier {
   final List<Movie> _movies = [];
   String _searchQuery = '';
   bool _isInitialized = false;
+  final Map<String, String?> _posterCache = {};
 
   MoviesService() {
     loadMovies();
@@ -14,6 +15,22 @@ class MoviesService extends ChangeNotifier {
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
+  }
+
+  Future<String?> getPosterUrl(String movieId, String title, int year) async {
+    if (_posterCache.containsKey(movieId)) {
+      return _posterCache[movieId];
+    }
+
+    try {
+      final posterUrl = await TMDbService.getMoviePoster(title, year);
+      _posterCache[movieId] = posterUrl;
+      notifyListeners();
+      return posterUrl;
+    } catch (e) {
+      print('Error loading poster for $title: $e');
+      return null;
+    }
   }
 
   Future<void> loadMovies() async {
@@ -183,17 +200,12 @@ class MoviesService extends ChangeNotifier {
     ];
 
     for (final data in movieData) {
-      final posterUrl = await TMDbService.getMoviePoster(
-        data['title'] as String,
-        data['year'] as int
-      );
-      
       _movies.add(Movie(
         id: data['id'] as String,
         title: data['title'] as String,
         overview: data['overview'] as String,
         rating: (data['rating'] as num).toDouble(),
-        posterUrl: posterUrl,
+        posterUrl: null, // Posters will be loaded lazily
         releaseYear: data['year'] as int,
         locationCount: data['locationCount'] as int,
         tourCount: data['tourCount'] as int,
@@ -203,6 +215,11 @@ class MoviesService extends ChangeNotifier {
 
     _isInitialized = true;
     notifyListeners();
+
+    // Start loading posters in the background
+    for (final movie in _movies) {
+      getPosterUrl(movie.id, movie.title, movie.releaseYear);
+    }
   }
 
   List<Movie> getMovies() {
@@ -230,7 +247,7 @@ class MoviesService extends ChangeNotifier {
       title: movieData['title'],
       overview: movieData['overview'],
       rating: 0.0,
-      posterUrl: movieData['posterUrl'],
+      posterUrl: null,
       releaseYear: movieData['releaseYear'] ?? 0,
       locationCount: 0,
       tourCount: 0,
@@ -238,28 +255,40 @@ class MoviesService extends ChangeNotifier {
     );
     _movies.add(newMovie);
     notifyListeners();
+
+    // Load the poster in the background
+    if (movieData['releaseYear'] != null) {
+      getPosterUrl(newMovie.id, newMovie.title, movieData['releaseYear']);
+    }
   }
 
   void updateMovie(String id, Map<String, dynamic> movieData) {
     final index = _movies.indexWhere((m) => m.id == id);
     if (index != -1) {
+      final currentMovie = _movies[index];
       _movies[index] = Movie(
         id: id,
-        title: movieData['title'],
-        overview: movieData['overview'],
-        rating: _movies[index].rating,
-        posterUrl: movieData['posterUrl'],
-        releaseYear: movieData['releaseYear'] ?? _movies[index].releaseYear,
-        locationCount: _movies[index].locationCount,
-        tourCount: _movies[index].tourCount,
-        locationProgress: _movies[index].locationProgress,
+        title: movieData['title'] ?? currentMovie.title,
+        overview: movieData['overview'] ?? currentMovie.overview,
+        rating: currentMovie.rating,
+        posterUrl: _posterCache[id],
+        releaseYear: movieData['releaseYear'] ?? currentMovie.releaseYear,
+        locationCount: currentMovie.locationCount,
+        tourCount: currentMovie.tourCount,
+        locationProgress: currentMovie.locationProgress,
       );
       notifyListeners();
+
+      // Update poster if title or year changed
+      if (movieData['title'] != null || movieData['releaseYear'] != null) {
+        getPosterUrl(id, _movies[index].title, _movies[index].releaseYear);
+      }
     }
   }
 
   void deleteMovie(String id) {
     _movies.removeWhere((movie) => movie.id == id);
+    _posterCache.remove(id);
     notifyListeners();
   }
 }

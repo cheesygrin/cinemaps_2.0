@@ -5,7 +5,7 @@ class Movie {
   final String title;
   final String overview;
   final double rating;
-  final String posterUrl;
+  final String? posterUrl;
   final int releaseYear;
   final int locationCount;
   final int tourCount;
@@ -17,7 +17,7 @@ class Movie {
     required this.title,
     required this.overview,
     required this.rating,
-    required this.posterUrl,
+    this.posterUrl,
     this.releaseYear = 0,
     this.locationCount = 0,
     this.tourCount = 0,
@@ -31,7 +31,7 @@ class Movie {
       title: json['title'] as String,
       overview: json['overview'] as String,
       rating: (json['rating'] as num).toDouble(),
-      posterUrl: json['posterUrl'] as String,
+      posterUrl: json['posterUrl'] as String?,
       releaseYear: json['releaseYear'] as int? ?? 0,
       locationCount: json['locationCount'] as int? ?? 0,
       tourCount: json['tourCount'] as int? ?? 0,

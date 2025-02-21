@@ -62,7 +62,7 @@ class _AdminMoviesPageState extends State<AdminMoviesPage> {
                 moviesService.addMovie({
                   'title': titleController.text,
                   'overview': overviewController.text,
-                  'posterUrl': posterUrlController.text,
+                  'posterUrl': posterUrlController.text.isEmpty ? null : posterUrlController.text,
                 });
                 Navigator.pop(context);
               }
@@ -77,7 +77,7 @@ class _AdminMoviesPageState extends State<AdminMoviesPage> {
   void _showEditMovieDialog(BuildContext context, Movie movie) {
     final titleController = TextEditingController(text: movie.title);
     final overviewController = TextEditingController(text: movie.overview);
-    final posterUrlController = TextEditingController(text: movie.posterUrl);
+    final posterUrlController = TextEditingController(text: movie.posterUrl ?? '');
 
     showDialog(
       context: context,
@@ -115,7 +115,7 @@ class _AdminMoviesPageState extends State<AdminMoviesPage> {
                 moviesService.updateMovie(movie.id, {
                   'title': titleController.text,
                   'overview': overviewController.text,
-                  'posterUrl': posterUrlController.text,
+                  'posterUrl': posterUrlController.text.isEmpty ? null : posterUrlController.text,
                 });
                 Navigator.pop(context);
               }
@@ -203,7 +203,7 @@ class _AdminMoviesPageState extends State<AdminMoviesPage> {
                       ),
                       color: Colors.white.withOpacity(0.1),
                       child: ListTile(
-                        leading: movie.posterUrl.isEmpty
+                        leading: movie.posterUrl == null
                             ? Container(
                                 width: 40,
                                 height: 60,
@@ -211,7 +211,7 @@ class _AdminMoviesPageState extends State<AdminMoviesPage> {
                                 child: const Icon(Icons.movie, color: Colors.white),
                               )
                             : Image.network(
-                                movie.posterUrl,
+                                movie.posterUrl!,
                                 width: 40,
                                 height: 60,
                                 fit: BoxFit.cover,

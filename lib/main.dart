@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:firebase_core/firebase_core.dart';
 // import 'firebase_options.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
@@ -18,6 +19,7 @@ import 'pages/splash_screen.dart';
 import 'theme/cinemaps_theme.dart';
 
 void main() async {
+  await dotenv.load(fileName: ".env");
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   

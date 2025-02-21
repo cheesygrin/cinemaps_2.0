@@ -206,11 +206,21 @@ class _MapPageState extends State<MapPage> {
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade900,
                                           borderRadius: BorderRadius.circular(4),
-                                          image: DecorationImage(
-                                            image: NetworkImage(movie.posterUrl),
-                                            fit: BoxFit.cover,
-                                          ),
+                                          image: movie.posterUrl != null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(movie.posterUrl!),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
                                         ),
+                                        child: movie.posterUrl == null
+                                            ? const Center(
+                                                child: Icon(
+                                                  Icons.movie,
+                                                  color: Colors.white54,
+                                                ),
+                                              )
+                                            : null,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
