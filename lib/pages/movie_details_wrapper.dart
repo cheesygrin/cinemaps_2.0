@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/movie_details_service.dart';
 import 'movie_details_page.dart';
 
 class MovieDetailsWrapper extends StatelessWidget {

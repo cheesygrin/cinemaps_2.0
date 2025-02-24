@@ -454,8 +454,9 @@ class _TVShowDetailsPageState extends State<TVShowDetailsPage>
                           future: _reviewService
                               .getMostHelpfulReviews(location.id, limit: 1),
                           builder: (context, snapshot) {
-                            if (!snapshot.hasData || snapshot.data!.isEmpty)
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
                               return SizedBox.shrink();
+                            }
                             final review = snapshot.data!.first;
                             return Padding(
                               padding: const EdgeInsets.all(16),

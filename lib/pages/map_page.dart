@@ -3,7 +3,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import '../theme/cinemaps_theme.dart';
 import '../services/movies_service.dart';
-import '../models/movie.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -15,6 +14,8 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
+  bool _showMovies = true;
+  bool _showTVShows = true;
   // Default to New York City coordinates
   static const LatLng _defaultLocation = LatLng(40.7128, -74.0060);
   
@@ -61,11 +62,20 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void _updateFilters() {
+    setState(() {
+      _loadMovieLocations();
+    });
+  }
+
   Future<void> _loadMovieLocations() async {
     if (!mounted) return;
     
     final moviesService = Provider.of<MoviesService>(context, listen: false);
     final movies = moviesService.getMovies();
+
+    // Clear existing markers
+    _markers.clear();
 
     // Sample locations for demonstration (replace with actual movie locations)
     final locations = {
@@ -78,18 +88,23 @@ class _MapPageState extends State<MapPage> {
 
     setState(() {
       for (var movie in movies) {
+        // Only add markers based on filter settings
         if (locations.containsKey(movie.id)) {
-          _markers.add(
-            Marker(
-              markerId: MarkerId(movie.id),
-              position: locations[movie.id]!,
-              infoWindow: InfoWindow(
-                title: movie.title,
-                snippet: '${movie.locationCount} locations',
+          if ((movie.isMovie && _showMovies) || (!movie.isMovie && _showTVShows)) {
+            _markers.add(
+              Marker(
+                markerId: MarkerId(movie.id),
+                position: locations[movie.id]!,
+                infoWindow: InfoWindow(
+                  title: movie.title,
+                  snippet: '${movie.locationCount} locations',
+                ),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  movie.isMovie ? BitmapDescriptor.hueViolet : BitmapDescriptor.hueAzure
+                ),
               ),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-            ),
-          );
+            );
+          }
         }
       }
     });
@@ -117,6 +132,47 @@ class _MapPageState extends State<MapPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            // Filter chips
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: const Text('Movies'),
+                    selected: _showMovies,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _showMovies = selected;
+                        _updateFilters();
+                      });
+                    },
+                    selectedColor: CinemapsTheme.neonYellow.withOpacity(0.7),
+                    checkmarkColor: Colors.black,
+                    labelStyle: TextStyle(
+                      color: _showMovies ? Colors.black : Colors.white,
+                    ),
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('TV Shows'),
+                    selected: _showTVShows,
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _showTVShows = selected;
+                        _updateFilters();
+                      });
+                    },
+                    selectedColor: CinemapsTheme.neonYellow.withOpacity(0.7),
+                    checkmarkColor: Colors.black,
+                    labelStyle: TextStyle(
+                      color: _showTVShows ? Colors.black : Colors.white,
+                    ),
+                    backgroundColor: Colors.white.withOpacity(0.1),
                   ),
                 ],
               ),
@@ -156,108 +212,120 @@ class _MapPageState extends State<MapPage> {
             // Movies section with template images
             Container(
               color: Colors.white.withOpacity(0.1),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Movies',
-                    style: TextStyle(
-                      color: CinemapsTheme.neonYellow,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 120,
-                    child: Consumer<MoviesService>(
-                      builder: (context, moviesService, child) {
-                        final movies = moviesService.getMovies();
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: movies.length,
-                          itemBuilder: (context, index) {
-                            final movie = movies[index];
-                            return Card(
-                              margin: const EdgeInsets.only(right: 16),
-                              color: Colors.white.withOpacity(0.1),
-                              child: InkWell(
-                                onTap: () {
-                                  final location = _markers.firstWhere(
-                                    (marker) => marker.markerId.value == movie.id,
-                                    orElse: () => _markers.first,
-                                  );
-                                  _mapController?.animateCamera(
-                                    CameraUpdate.newLatLngZoom(
-                                      location.position,
-                                      15,
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  width: 200,
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade900,
-                                          borderRadius: BorderRadius.circular(4),
-                                          image: movie.posterUrl != null
-                                              ? DecorationImage(
-                                                  image: NetworkImage(movie.posterUrl!),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                        ),
-                                        child: movie.posterUrl == null
-                                            ? const Center(
-                                                child: Icon(
-                                                  Icons.movie,
-                                                  color: Colors.white54,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              movie.title,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Rating: ${movie.rating}',
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.7),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.25,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Movies',
+                        style: TextStyle(
+                          color: CinemapsTheme.neonYellow,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 120,
+                        child: Consumer<MoviesService>(
+                          builder: (context, moviesService, child) {
+                            final movies = moviesService.getMovies().where((movie) =>
+                              (movie.isMovie && _showMovies) || (!movie.isMovie && _showTVShows)
+                            ).toList();
+                            
+                            if (movies.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  'No movies or TV shows selected',
+                                  style: TextStyle(color: Colors.white70),
                                 ),
-                              ),
+                              );
+                            }
+                            
+                            return ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: movies.length,
+                              itemBuilder: (context, index) {
+                                final movie = movies[index];
+                                return Card(
+                                  margin: const EdgeInsets.only(right: 16),
+                                  color: Colors.white.withOpacity(0.1),
+                                  child: InkWell(
+                                    onTap: () {
+                                      final marker = _markers.firstWhere(
+                                        (marker) => marker.markerId.value == movie.id,
+                                        orElse: () => _markers.first,
+                                      );
+                                      _mapController?.animateCamera(
+                                        CameraUpdate.newLatLngZoom(
+                                          marker.position,
+                                          15,
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 200,
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade900,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.movie,
+                                                color: Colors.white54,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  movie.title,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Rating: ${movie.rating}',
+                                                  style: TextStyle(
+                                                    color: Colors.white.withOpacity(0.7),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],

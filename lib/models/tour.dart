@@ -32,8 +32,8 @@ class CustomTour {
     String? name,
     this.ratingCount = 0,
     int? totalDuration,
-  }) : this.name = name ?? title,
-       this.totalDuration = totalDuration ?? estimatedDuration;
+  }) : name = name ?? title,
+       totalDuration = totalDuration ?? estimatedDuration;
 
   double get totalDistance {
     if (stops.length < 2) return 0.0;

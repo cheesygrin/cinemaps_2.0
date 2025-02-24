@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../theme/cinemaps_theme.dart';
+import '../services/supabase_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,7 +14,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late AnimationController _logoController;
   late AnimationController _glowController;
   late AnimationController _textController;
-  late Animation<double> _logoRotation;
   late Animation<double> _logoScale;
   late Animation<double> _glowRadius;
   late Animation<double> _textSlide;
@@ -39,15 +39,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
-    // Logo rotation animation
-    _logoRotation = Tween<double>(
-      begin: 0,
-      end: 2 * math.pi,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeInOutBack,
-    ));
 
     // Logo scale animation
     _logoScale = Tween<double>(
@@ -78,8 +69,33 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     // Start animations in sequence
     _logoController.forward().then((_) {
-      _textController.forward();
+      _textController.forward().then((_) {
+        // Navigate after animations complete
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _checkAuthAndNavigate();
+          }
+        });
+      });
     });
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    try {
+      final session = await SupabaseService.instance.client.auth.currentSession;
+      if (mounted) {
+        if (session != null) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking auth state: $e');
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    }
   }
 
   @override
@@ -107,31 +123,29 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 AnimatedBuilder(
                   animation: Listenable.merge([_logoController, _glowController]),
                   builder: (context, child) {
-                    return Transform.rotate(
-                      angle: _logoRotation.value,
-                      child: Transform.scale(
-                        scale: _logoScale.value,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: CinemapsTheme.hotPink.withOpacity(0.5),
-                                blurRadius: _glowRadius.value,
-                                spreadRadius: _glowRadius.value / 2,
-                              ),
-                              BoxShadow(
-                                color: CinemapsTheme.neonYellow.withOpacity(0.3),
-                                blurRadius: _glowRadius.value * 1.5,
-                                spreadRadius: _glowRadius.value / 3,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.movie,
-                            size: 100,
-                            color: CinemapsTheme.hotPink,
-                          ),
+                    return Transform.scale(
+                      scale: _logoScale.value,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: CinemapsTheme.hotPink.withOpacity(0.5),
+                              blurRadius: _glowRadius.value,
+                              spreadRadius: _glowRadius.value / 2,
+                            ),
+                            BoxShadow(
+                              color: CinemapsTheme.neonYellow.withOpacity(0.3),
+                              blurRadius: _glowRadius.value * 1.5,
+                              spreadRadius: _glowRadius.value / 3,
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     );

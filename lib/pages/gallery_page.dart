@@ -3,6 +3,7 @@ import '../theme/cinemaps_theme.dart';
 import '../services/photo_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:cinemaps/services/supabase_service.dart';
 
 class GalleryPage extends StatefulWidget {
   final String? locationId;
@@ -441,9 +442,9 @@ class _PhotoDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: CinemapsTheme.deepSpaceBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

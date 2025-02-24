@@ -28,24 +28,35 @@ class MovieCard extends StatelessWidget {
           children: [
             Expanded(
               flex: 3,
-              child: CachedNetworkImage(
-                imageUrl: movie.posterUrl ?? '',
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[900],
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[900],
-                  child: const Icon(
-                    Icons.movie,
-                    color: Colors.white54,
-                    size: 48,
-                  ),
-                ),
-              ),
+              child: movie.posterUrl != null && movie.posterUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: movie.posterUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[900],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(CinemapsTheme.hotPink),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[900],
+                        child: const Icon(
+                          Icons.movie,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[900],
+                      child: const Icon(
+                        Icons.movie,
+                        color: Colors.white54,
+                        size: 48,
+                      ),
+                    ),
             ),
             Expanded(
               flex: 1,

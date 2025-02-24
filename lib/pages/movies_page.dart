@@ -6,12 +6,13 @@ import '../theme/cinemaps_theme.dart';
 import '../services/movies_service.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
-import '../models/movie.dart';
+import '../models/movie.dart' as app_models;
 import '../models/recommendation.dart';
 import '../widgets/recommendations_section.dart';
 import 'movie_details_page.dart';
 import '../widgets/movie_card.dart';
 import 'package:geocoding/geocoding.dart';
+import '../widgets/add_movie_dialog.dart';
 
 class MoviesPage extends StatefulWidget {
   const MoviesPage({super.key});
@@ -23,7 +24,8 @@ class MoviesPage extends StatefulWidget {
 class _MoviesPageState extends State<MoviesPage> {
   late MoviesService _moviesService;
   final TextEditingController _searchController = TextEditingController();
-  List<Movie> _movies = [];
+  List<app_models.Movie> _movies = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -32,11 +34,19 @@ class _MoviesPageState extends State<MoviesPage> {
     _loadMovies();
   }
 
-  void _loadMovies() {
-    _moviesService.loadMovies();
+  Future<void> _loadMovies() async {
     setState(() {
-      _movies = _moviesService.getMovies();
+      _isLoading = true;
     });
+
+    await _moviesService.loadMovies();
+    
+    if (mounted) {
+      setState(() {
+        _movies = _moviesService.getMovies();
+        _isLoading = false;
+      });
+    }
   }
 
   void _onSearchChanged(String query) {
@@ -56,62 +66,131 @@ class _MoviesPageState extends State<MoviesPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RecommendationsSection(
-              userId: user?.uid ?? 'guest',
-              filterType: RecommendationType.movie,
-              limit: 5,
-            ),
+            if (!_isLoading) ...[
+              RecommendationsSection(
+                userId: user?.uid ?? 'guest',
+                filterType: RecommendationType.movie,
+                limit: 5,
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Search movies...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                  prefixIcon: const Icon(Icons.search, color: CinemapsTheme.neonYellow),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Search movies...',
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                        prefixIcon: const Icon(Icons.search, color: CinemapsTheme.neonYellow),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (_movies.isEmpty) ...[
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        setState(() => _isLoading = true);
+                        await _moviesService.addSampleMovies();
+                        await _loadMovies();
+                      },
+                      icon: const Icon(Icons.add_to_photos),
+                      label: const Text('Add Sample Movies'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CinemapsTheme.neonYellow,
+                        foregroundColor: Colors.black,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.7,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: _movies.length,
-                itemBuilder: (context, index) {
-                  final movie = _movies[index];
-                  return MovieCard(
-                    movie: movie,
-                    onTap: () {
-                      try {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MovieDetailsPage(
-                              movieId: movie.id,
-                              userId: user?.uid ?? 'guest',
-                            ),
+              child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(CinemapsTheme.neonYellow),
+                    ),
+                  )
+                : _movies.isEmpty
+                  ? SingleChildScrollView(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.movie_outlined,
+                                size: 64,
+                                color: Colors.white.withOpacity(0.3),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchController.text.isEmpty
+                                  ? 'No movies added yet'
+                                  : 'No movies found',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 18,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              if (_searchController.text.isEmpty)
+                                Text(
+                                  'Add your first movie using the + button',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                            ],
                           ),
+                        ),
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.7,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: _movies.length,
+                      itemBuilder: (context, index) {
+                        final movie = _movies[index];
+                        return MovieCard(
+                          movie: movie,
+                          onTap: () {
+                            try {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MovieDetailsPage(
+                                    movieId: movie.id,
+                                    userId: user?.uid ?? 'guest',
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              debugPrint('Error navigating to MovieDetailsPage: $e');
+                            }
+                          },
                         );
-                      } catch (e) {
-                        print('Error navigating to MovieDetailsPage: $e');
-                      }
-                    },
-                  );
-                },
-              ),
+                      },
+                    ),
             ),
           ],
         ),
@@ -331,7 +410,7 @@ class _MoviesPageState extends State<MoviesPage> {
                         });
                       },
                     ),
-                  )).toList(),
+                  )),
                 ],
 
                 if (isUploading) ...[
@@ -363,20 +442,27 @@ class _MoviesPageState extends State<MoviesPage> {
                         });
 
                         try {
-                          final movieId = titleController.text.toLowerCase().replaceAll(' ', '_');
-                          // Upload image to Firebase Storage
+                          final String title = titleController.text;
+                          final String id = title.toLowerCase().replaceAll(' ', '_');
+                          
+                          // Upload image to Supabase storage
                           final posterUrl = await storageService.uploadMoviePoster(
                             selectedImage!,
-                            movieId,
+                            id,
                           );
 
-                          final movieData = {
-                            'title': titleController.text,
+                          final movie = app_models.Movie.fromJson({
+                            'id': id,
+                            'title': title,
                             'overview': overviewController.text,
                             'releaseYear': int.tryParse(yearController.text) ?? 0,
+                            'rating': 0.0,
                             'posterUrl': posterUrl,
+                            'locationCount': locations.length,
+                            'tourCount': 0,
+                            'locationProgress': 0.0,
                             'locations': locations,
-                          };
+                          });
 
                           if (!context.mounted) return;
                           
@@ -384,8 +470,10 @@ class _MoviesPageState extends State<MoviesPage> {
                             context,
                             listen: false,
                           );
-                          moviesService.addMovie(movieData);
+                          await moviesService.addMovie(movie);
+                          if (!context.mounted) return;
                           Navigator.pop(context);
+                          _loadMovies();
                         } catch (e) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -411,6 +499,48 @@ class _MoviesPageState extends State<MoviesPage> {
         ),
       ),
     );
+  }
+
+  void _handleAddMovie() async {
+    final movieData = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => const AddMovieDialog(),
+    );
+
+    if (movieData != null) {
+      try {
+        final String title = movieData['title'] as String;
+        final String id = title.toLowerCase().replaceAll(' ', '_');
+        final List<Map<String, dynamic>> locationsList = 
+            (movieData['locations'] as List).cast<Map<String, dynamic>>();
+        
+        final movie = app_models.Movie.fromJson({
+          'id': id,
+          'title': title,
+          'overview': movieData['overview'] as String,
+          'rating': 0.0,
+          'posterUrl': null,
+          'releaseYear': movieData['releaseYear'] as int,
+          'locationCount': locationsList.length,
+          'tourCount': 0,
+          'locationProgress': 0.0,
+          'locations': locationsList,
+        });
+        
+        await _moviesService.addMovie(movie);
+        _loadMovies();
+      } catch (e) {
+        debugPrint('Error adding movie: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to add movie: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override

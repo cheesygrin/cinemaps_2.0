@@ -1,4 +1,41 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cinemaps/services/supabase_service.dart';
+
+class Location {
+  final String name;
+  final String address;
+  final String description;
+  final double latitude;
+  final double longitude;
+
+  Location({
+    required this.name,
+    required this.address,
+    required this.description,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      name: json['name'] as String,
+      address: json['address'] as String,
+      description: json['description'] as String,
+      latitude: json['latitude'] as double,
+      longitude: json['longitude'] as double,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'address': address,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+  }
+}
 
 class Movie {
   final String id;
@@ -10,7 +47,9 @@ class Movie {
   final int locationCount;
   final int tourCount;
   final double locationProgress;
+  final List<Location>? locations;
   final bool isInWatchlist;
+  final bool isMovie;
 
   Movie({
     required this.id,
@@ -18,11 +57,13 @@ class Movie {
     required this.overview,
     required this.rating,
     this.posterUrl,
-    this.releaseYear = 0,
-    this.locationCount = 0,
-    this.tourCount = 0,
-    this.locationProgress = 0.0,
+    required this.releaseYear,
+    required this.locationCount,
+    required this.tourCount,
+    required this.locationProgress,
+    this.locations,
     this.isInWatchlist = false,
+    this.isMovie = true,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -30,13 +71,19 @@ class Movie {
       id: json['id'] as String,
       title: json['title'] as String,
       overview: json['overview'] as String,
-      rating: (json['rating'] as num).toDouble(),
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       posterUrl: json['posterUrl'] as String?,
-      releaseYear: json['releaseYear'] as int? ?? 0,
+      releaseYear: json['releaseYear'] as int,
       locationCount: json['locationCount'] as int? ?? 0,
       tourCount: json['tourCount'] as int? ?? 0,
       locationProgress: (json['locationProgress'] as num?)?.toDouble() ?? 0.0,
+      locations: json['locations'] != null
+          ? (json['locations'] as List)
+              .map((x) => Location.fromJson(x as Map<String, dynamic>))
+              .toList()
+          : null,
       isInWatchlist: json['isInWatchlist'] as bool? ?? false,
+      isMovie: json['isMovie'] as bool? ?? true,
     );
   }
 
@@ -51,7 +98,9 @@ class Movie {
       'locationCount': locationCount,
       'tourCount': tourCount,
       'locationProgress': locationProgress,
+      'locations': locations?.map((x) => x.toJson()).toList(),
       'isInWatchlist': isInWatchlist,
+      'isMovie': isMovie,
     };
   }
 
@@ -65,7 +114,9 @@ class Movie {
     int? locationCount,
     int? tourCount,
     double? locationProgress,
+    List<Location>? locations,
     bool? isInWatchlist,
+    bool? isMovie,
   }) {
     return Movie(
       id: id ?? this.id,
@@ -77,7 +128,9 @@ class Movie {
       locationCount: locationCount ?? this.locationCount,
       tourCount: tourCount ?? this.tourCount,
       locationProgress: locationProgress ?? this.locationProgress,
+      locations: locations ?? this.locations,
       isInWatchlist: isInWatchlist ?? this.isInWatchlist,
+      isMovie: isMovie ?? this.isMovie,
     );
   }
 }

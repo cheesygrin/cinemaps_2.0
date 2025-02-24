@@ -80,7 +80,7 @@ class ProfilePage extends StatelessWidget {
                             : null,
                         child: user.photoURL == null
                             ? Text(
-                                user.displayName?[0].toUpperCase() ?? user.email[0].toUpperCase(),
+                                user.displayName[0].toUpperCase() ?? user.email[0].toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 32,
                                   color: Colors.white,

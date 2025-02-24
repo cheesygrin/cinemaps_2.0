@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/social_post.dart';
-import '../services/social_service.dart';
 
 class SocialFeedList extends StatelessWidget {
   final List<SocialPost> posts;

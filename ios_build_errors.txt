@@ -1,0 +1,45 @@
+iOS Build Errors for Cinemaps Flutter App
+
+Main Error:
+- Error (Xcode): unsupported option '-G' for target 'arm64-apple-ios14.0'
+
+Context:
+- This error occurs during the compilation of BoringSSL-GRPC (a dependency of Firebase)
+- The error persists even after:
+  1. Setting IPHONEOS_DEPLOYMENT_TARGET to 14.0
+  2. Removing problematic compiler flags
+  3. Setting valid architectures to arm64 and arm64e
+  4. Disabling bitcode
+  5. Attempting to modify OTHER_CFLAGS and OTHER_CPLUSPLUSFLAGS
+
+Additional Warnings:
+- CocoaPods warning about base configuration not being set
+- Warning about Run script build phase 'Create Symlinks to Header Folders'
+
+Environment:
+- iOS Target: 14.0
+- Device: iPhone 14 Pro Max (Zero Delta)
+- iOS Version: 18.3
+- Flutter Dependencies:
+  * firebase_core: ^2.24.2
+  * firebase_auth: ^4.15.3
+  * cloud_firestore: ^4.13.6
+  * firebase_storage: ^11.5.6
+
+Attempted Solutions:
+1. Cleaned project and pods
+2. Updated Podfile with special handling for BoringSSL-GRPC
+3. Modified compiler flags and architecture settings
+4. Set OPENSSL_NO_ASM=1 for BoringSSL-GRPC
+5. Removed problematic compiler flags
+
+The error seems to be specifically related to the BoringSSL-GRPC pod trying to use the '-G' compiler flag, which is not supported for the arm64-apple-ios14.0 target.
+
+To determine the error preventing your project from running, you need to check the contents of the `ios_build_errors.txt` and `ios_build_errors_update.txt` files. These files likely contain the error messages or logs that can help identify the issue.
+
+Here is how you can check the error logs:
+
+1. Open the `ios_build_errors.txt` file.
+2. Open the `ios_build_errors_update.txt` file.
+
+You can open these files using any text editor or directly from the terminal using commands like `cat` or `less`.

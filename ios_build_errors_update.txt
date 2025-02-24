@@ -1,0 +1,38 @@
+Updated iOS Build Errors for Cinemaps Flutter App (Feb 21, 2024)
+
+Current Errors:
+1. 'Flutter/Flutter.h' file not found in multiple files:
+   - share_plus plugin
+   - geocoding_ios plugin
+   - sqflite_darwin plugin
+2. Swift Compiler Error: No such module 'Flutter' in:
+   - shared_preferences_foundation
+   - path_provider_foundation
+
+Environment:
+- iOS Target: 14.0
+- Device: iPhone (Zero Delta)
+- Xcode Version: 16.2
+- macOS: 15.3.1
+- Flutter Dependencies: Multiple Firebase packages and iOS-specific plugins
+
+Recent Attempted Solutions:
+1. Updated Podfile with BoringSSL-GRPC specific configurations
+2. Cleaned and reinstalled pods
+3. Ran flutter precache --ios
+4. Deintegrated and reintegrated pods
+5. Updated CocoaPods repositories
+
+Current State:
+- Previous error with '-G' flag seems resolved
+- New errors indicate Flutter framework is not being properly linked
+- Multiple plugins unable to find Flutter framework headers
+- Issue appears to be with Flutter framework integration rather than Firebase/BoringSSL
+
+Next Steps Needed:
+1. Verify Flutter framework is properly generated and linked
+2. Check Xcode project settings for framework search paths
+3. Verify Flutter.framework exists in expected location
+4. May need assistance with proper Flutter framework integration in Xcode
+
+Note: We seem to have moved from a compiler flag issue to a framework linking issue, suggesting our previous fixes may have altered the project structure in an unexpected way.

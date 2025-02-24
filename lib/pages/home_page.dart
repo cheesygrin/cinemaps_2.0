@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/cinemaps_theme.dart';
 import 'package:flutter/services.dart';
-import 'movies_page.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
 
 class HomePage extends StatelessWidget {
   final Function(int)? onNavigate;

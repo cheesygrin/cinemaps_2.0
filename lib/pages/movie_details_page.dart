@@ -44,6 +44,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
   bool _isLoading = true;
   bool _isLiked = false;
   bool _isInWatchlist = false;
+  String? _error;
   Set<Marker> _locationMarkers = {};
   Set<Polyline> _routePolylines = {};
   bool _isRoutePlanning = false;
@@ -411,12 +412,14 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
 
   Future<void> _loadMovieDetails() async {
     if (!mounted) return;
-    
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
     try {
       final details = await _movieService.getMovieDetails(widget.movieId);
       if (!mounted) return;
-      
       setState(() {
         _movieDetails = details;
         _locationMarkers = details.filmingLocations
@@ -433,14 +436,8 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
       });
     } catch (e) {
       if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading movie details: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
       setState(() {
+        _error = e.toString();
         _isLoading = false;
       });
     }
@@ -450,78 +447,95 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: CinemapsTheme.deepSpaceBlack,
-      floatingActionButton: _movieDetails != null ? FloatingActionButton(
-        onPressed: () => _showAddReviewDialog(),
-        backgroundColor: CinemapsTheme.hotPink,
-        child: const Icon(Icons.rate_review),
-      ) : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _movieDetails == null
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(CinemapsTheme.hotPink),
+              ),
+            )
+          : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
                         Icons.error_outline,
-                        color: Colors.red,
-                        size: 48,
+                        color: CinemapsTheme.hotPink,
+                        size: 64,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Failed to load movie details',
-                        style: TextStyle(color: Colors.white),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                            ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white70,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: _loadMovieDetails,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: CinemapsTheme.hotPink,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
                         ),
                         child: const Text('Retry'),
                       ),
                     ],
                   ),
                 )
-              : CustomScrollView(
-                  slivers: [
-                    _buildAppBar(),
-                    SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          _buildMovieInfo(),
-                          const SizedBox(height: 16),
-                          _buildSocialActions(),
-                          const SizedBox(height: 16),
-                          TabBar(
-                            controller: _tabController,
-                            labelColor: Colors.white,
-                            unselectedLabelColor: Colors.white.withOpacity(0.5),
-                            indicatorColor: CinemapsTheme.hotPink,
-                            tabs: const [
-                              Tab(text: 'LOCATIONS'),
-                              Tab(text: 'TOURS'),
-                              Tab(text: 'PHOTOS'),
-                              Tab(text: 'REVIEWS'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildLocationsTab(),
-                          _buildToursTab(),
-                          _buildPhotosTab(),
-                          _buildReviewsTab(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              : _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
+    return CustomScrollView(
+      slivers: [
+        _buildAppBar(),
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              _buildMovieInfo(),
+              const SizedBox(height: 16),
+              _buildSocialActions(),
+              const SizedBox(height: 16),
+              TabBar(
+                controller: _tabController,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white.withOpacity(0.5),
+                indicatorColor: CinemapsTheme.hotPink,
+                tabs: const [
+                  Tab(text: 'LOCATIONS'),
+                  Tab(text: 'EXPLORE'),
+                  Tab(text: 'PHOTOS'),
+                  Tab(text: 'REVIEWS'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: true,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildLocationsTab(),
+              _buildToursTab(),
+              _buildPhotosTab(),
+              _buildReviewsTab(),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -536,18 +550,11 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
           shape: BoxShape.circle,
         ),
         child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: CinemapsTheme.neonYellow),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          _movieDetails!.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
         background: Stack(
           fit: StackFit.expand,
           children: [
@@ -882,7 +889,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
       children: [
         if (_currentRoute != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(
@@ -909,8 +916,9 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
               ],
             ),
           ),
-        SizedBox(
+        Container(
           height: 300,
+          margin: const EdgeInsets.all(16),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Stack(
@@ -951,7 +959,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage>
         ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _movieDetails!.filmingLocations.length,
             itemBuilder: (context, index) {
               return LocationCard(

@@ -18,15 +18,10 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-  <meta name="google-signin-client_id" content="296748595332-4g7bkvgp2h6aqhg8piih3pmlqj67dk6k.apps.googleusercontent.com">
-  <!-- Firebase configuration -->
-  <script type="text/javascript">
-    window.flutterWebRenderer = "html";
-  </script>
+  <meta name="description" content="A movie locations app built with Flutter.">
 
   <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="cinemaps">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -36,10 +31,29 @@
 
   <title>cinemaps</title>
   <link rel="manifest" href="manifest.json">
-  <!-- Firebase will be initialized in Flutter -->
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = null;
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
 </head>
 <body>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDiNM8J2SNfCnizul5HQD4jd0t63dSDXCY&libraries=places"></script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

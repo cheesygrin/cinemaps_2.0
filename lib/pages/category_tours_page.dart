@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/cinemaps_theme.dart';
 import '../services/tour_management_service.dart';
+import '../models/custom_tour.dart';
 import 'tour_details_page.dart';
 
 class CategoryToursPage extends StatefulWidget {
@@ -53,13 +54,13 @@ class _CategoryToursPageState extends State<CategoryToursPage> {
         int comparison;
         switch (_sortBy) {
           case 'rating':
-            comparison = a.rating.compareTo(b.rating);
+            comparison = (a.rating ?? 0).compareTo(b.rating ?? 0);
             break;
           case 'duration':
-            comparison = a.totalDuration.compareTo(b.totalDuration);
+            comparison = (a.totalDuration ?? 0).compareTo(b.totalDuration ?? 0);
             break;
           case 'distance':
-            comparison = a.totalDistance.compareTo(b.totalDistance);
+            comparison = (a.totalDistance ?? 0).compareTo(b.totalDistance ?? 0);
             break;
           default:
             comparison = 0;
@@ -197,29 +198,35 @@ class _CategoryToursPageState extends State<CategoryToursPage> {
             ],
           ),
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             )
           else if (_tours.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.movie_filter,
-                      size: 64,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No tours found in this category',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 18,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.movie_filter,
+                        size: 64,
+                        color: Colors.white.withOpacity(0.3),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Text(
+                        'No tours found in this category',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
@@ -235,6 +242,7 @@ class _CategoryToursPageState extends State<CategoryToursPage> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
+                    if (index >= _tours.length) return null;
                     final tour = _tours[index];
                     return Card(
                       color: Colors.white.withOpacity(0.05),
@@ -251,77 +259,70 @@ class _CategoryToursPageState extends State<CategoryToursPage> {
                           );
                         },
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: tour.imageUrl != null
-                                  ? Image.network(
-                                      tour.imageUrl!,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Container(
-                                      color:
-                                          CinemapsTheme.hotPink.withOpacity(0.2),
-                                      child: const Icon(
-                                        Icons.movie_filter,
-                                        color: CinemapsTheme.hotPink,
-                                        size: 48,
-                                      ),
-                                    ),
+                            Expanded(
+                              flex: 3,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(4),
+                                  ),
+                                  image: tour.imageUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(tour.imageUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: tour.imageUrl == null
+                                    ? Center(
+                                        child: Icon(
+                                          Icons.movie,
+                                          size: 48,
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                      )
+                                    : null,
+                              ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tour.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      tour.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    tour.description,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 12,
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.star,
+                                          size: 16,
+                                          color: CinemapsTheme.neonYellow,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          (tour.rating ?? 0.0).toStringAsFixed(1),
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.7),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: CinemapsTheme.neonYellow,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${tour.rating}/5',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        '${tour.stops.length} stops',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ],

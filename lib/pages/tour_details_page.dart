@@ -4,6 +4,7 @@ import '../theme/cinemaps_theme.dart';
 import '../services/tour_management_service.dart';
 import '../models/tour.dart';
 import 'tour_navigation_page.dart';
+import 'package:cinemaps/services/supabase_service.dart';
 
 class TourDetailsPage extends StatefulWidget {
   final CustomTour tour;
@@ -226,7 +227,7 @@ class _TourDetailsPageState extends State<TourDetailsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.star,
                         color: CinemapsTheme.neonYellow,
                         size: 20,

@@ -1,23 +1,28 @@
 import 'dart:io';
-// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
 import 'package:path/path.dart' as path;
+import 'supabase_service.dart';
 
 class StorageService {
-  // final FirebaseStorage _storage = FirebaseStorage.instance;
+  final _supabase = SupabaseService.instance;
   final _uuid = const Uuid();
 
   Future<String> uploadMoviePoster(File file, String movieId) async {
     try {
-      final fileName = '${movieId}_poster.jpg';
-      // For now, just copy the file to local storage and return the path
-      final appDir = await getApplicationDocumentsDirectory();
-      final savedFile = await file.copy(path.join(appDir.path, fileName));
-      return savedFile.path;
+      final fileExtension = path.extension(file.path);
+      final fileName = '$movieId${_uuid.v4()}$fileExtension';
+      final bytes = await file.readAsBytes();
+      
+      final response = await _supabase.uploadFile(
+        'movie-posters',
+        fileName,
+        bytes,
+      );
+      
+      return response;
     } catch (e) {
-      print('Error saving movie poster: $e');
-      rethrow;
+      throw Exception('Failed to upload movie poster: $e');
     }
   }
 
@@ -25,25 +30,40 @@ class StorageService {
     try {
       final imageId = _uuid.v4();
       final fileName = '$imageId.jpg';
-      // For now, just copy the file to local storage and return the path
-      final appDir = await getApplicationDocumentsDirectory();
-      final savedFile = await file.copy(path.join(appDir.path, fileName));
-      return savedFile.path;
+      final bytes = await file.readAsBytes();
+      
+      final response = await _supabase.uploadFile(
+        'gallery-images',
+        'gallery_images/$fileName',
+        bytes,
+      );
+      
+      return response;
     } catch (e) {
-      print('Error saving gallery image: $e');
+      print('Error uploading gallery image: $e');
       rethrow;
     }
   }
 
-  Future<void> deleteImage(String url) async {
+  Future<void> deleteImage(String path) async {
     try {
-      final file = File(url);
-      if (await file.exists()) {
-        await file.delete();
-      }
+      await _supabase.deleteFile('public', path);
     } catch (e) {
       print('Error deleting image: $e');
       rethrow;
     }
+  }
+
+  Future<String> uploadFile(String path, Uint8List fileBytes) async {
+    final response = await _supabase.uploadFile('public', path, fileBytes);
+    return response;
+  }
+
+  Future<Uint8List> downloadFile(String path) async {
+    return await _supabase.downloadFile('public', path);
+  }
+
+  Future<void> deleteFile(String path) async {
+    await _supabase.deleteFile('public', path);
   }
 } 

@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import '../models/gallery_image.dart';
+import 'storage_service.dart';
 
 class GalleryService extends ChangeNotifier {
-  // final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final StorageService _storage = StorageService();
+  final _uuid = const Uuid();
   List<GalleryImage> _images = [];
   bool _isLoading = false;
 
@@ -38,12 +40,6 @@ class GalleryService extends ChangeNotifier {
                 isAsset: true,
               ))
           .toList();
-
-      // TODO: Load actual images from Firestore
-      // final snapshot = await _firestore.collection('gallery').get();
-      // _images = snapshot.docs
-      //     .map((doc) => GalleryImage.fromJson(doc.data()))
-      //     .toList();
     } catch (e) {
       print('Error loading gallery images: $e');
     } finally {
@@ -54,7 +50,6 @@ class GalleryService extends ChangeNotifier {
 
   Future<void> addImage(GalleryImage image) async {
     try {
-      // await _firestore.collection('gallery').doc(image.id).set(image.toJson());
       _images.add(image);
       notifyListeners();
     } catch (e) {
@@ -65,7 +60,6 @@ class GalleryService extends ChangeNotifier {
 
   Future<void> deleteImage(String imageId) async {
     try {
-      // await _firestore.collection('gallery').doc(imageId).delete();
       _images.removeWhere((image) => image.id == imageId);
       notifyListeners();
     } catch (e) {
@@ -76,10 +70,6 @@ class GalleryService extends ChangeNotifier {
 
   Future<void> likeImage(String imageId) async {
     try {
-      // await _firestore.collection('gallery').doc(imageId).update({
-      //   'likes': FieldValue.increment(1),
-      // });
-      
       final index = _images.indexWhere((image) => image.id == imageId);
       if (index != -1) {
         _images[index] = _images[index].copyWith(

@@ -189,7 +189,7 @@ class PhotoGallery extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              photo.caption!,
+                              photo.caption,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.7),
                               ),
